@@ -1,0 +1,31 @@
+version: 2.1
+defaults: &defaults
+  docker:
+    - image: amazon/aws-cli
+    
+commands:
+  destroy_environments:
+    steps:
+      - run:
+          name: Destroy environment.
+          command: |
+              aws cloudformation delete-stack --stack-name exc-infra-create --region us-west-2
+# Here the start of the exercise from the course:
+jobs:
+  create_infrastructure:
+    <<: *defaults
+    steps:
+      - checkout
+      - run: ./create.sh exc-infra-create template.yml
+      - run:
+          name: simulate error.
+          command: |
+            return 1
+      - destroy_environments
+        when: on_fail
+
+workflows:
+  create_infrastructure:
+    # Run the welcome/run job in its own container
+    jobs:
+      - create_infrastructure
